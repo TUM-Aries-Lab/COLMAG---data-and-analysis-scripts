@@ -1,176 +1,219 @@
-# COLMAG_CodeDataAnalysis
+# COLMAG Data and Analysis Scripts
 
-A structured repository of CSV-based experimental recordings collected across multiple COLMAG sessions. The dataset is organized by session and experiment type, and captures time-series telemetry related to magnetic measurements, end-effector kinematics, forces, and multi-sensor readings.
+MATLAB analysis code and experiment assets for COLMAG studies on magnetic sensing in collaborative robotics.
 
-> **Current scope:** this repository snapshot contains data files and scripts for analysis and visualization.
+This repository combines:
+- experiment datasets across multiple acquisition sessions,
+- MATLAB scripts used for analysis, visualization, and figure generation,
+- helper functions for plotting and statistical processing,
+- ROS bag recordings and derived `.mat` outputs for selected studies.
 
-## Overview
+The codebase covers several experiment families, including avoidance, safety, guidance, magnetic tracking, calibration, and learning-based magnetic-field estimation.
 
-This repository appears to support offline analysis of experimental runs involving:
+## Important note about data download
 
-- magnetic position and orientation channels
-- end-effector position, velocity, and force channels
-- multi-sensor measurements (`s1` to `s4` for main detector, `s1` to `s8` for peripheral detector)
-- extended telemetry in selected files, including normalized sensor values, timing/fit metrics, matrix-style outputs, and state labels
+Large data assets in this repository are tracked with **Git LFS**.
 
-The data is grouped into two sessions and several experiment categories such as avoidance, safety, demo, and modular experiments.
+That means `.csv`, `.bag`, and `.mat` files may appear as small text pointer files if you downloaded the repository as a ZIP archive or exported it without fetching LFS objects. In that case, you do **not** yet have the actual experimental data.
 
-## Dataset at a glance
+**To obtain the real files, use Git LFS in a cloned checkout**:
 
-- **Total files:** 36 CSV files
-- **Approximate size:** 3.36 GB
-- **Approximate total samples:** 6.18 million rows
-- **Approximate recorded duration:** 1.72 hours of telemetry
-- **Observed sampling cadence:** approximately 1 kHz in representative files, inferred from timestamp spacing
-
-## Repository structure
-
-```text
-COLMAG_CodeDataAnalysis/
-├── README.md
-└── data/
-    ├── session_01/
-    │   ├── avoidance_exp/        # 6 CSV files
-    │   ├── demo_experiment/      # 3 CSV files
-    │   ├── experiments_mod_1/    # 9 CSV files
-    │   ├── experiments_mod_2/    # 9 CSV files
-    │   └── safety_experiments/   # 6 CSV files
-    └── session_02/
-        └── *.csv                 # 3 CSV files
+```bash
+git lfs install
+git clone <repo-url>
+cd <repo-folder>
+git lfs pull
 ```
 
-## Folder summary
+Tracked extensions in this repository:
+- `.csv`
+- `.bag`
+- `.mat`
 
-| Path | Files | Approx. rows | Approx. duration | Schema |
-|---|---:|---:|---:|---|
-| `data/session_01/avoidance_exp` | 6 | 1,856,839 | 30.9 min | base |
-| `data/session_01/demo_experiment` | 3 | 515,377 | 8.6 min | extended + state |
-| `data/session_01/experiments_mod_1` | 9 | 1,125,969 | 18.8 min | base |
-| `data/session_01/experiments_mod_2` | 9 | 1,175,709 | 19.6 min | base |
-| `data/session_01/safety_experiments` | 6 | 1,040,397 | 17.3 min | base |
-| `data/session_02` | 3 | 462,754 | 7.7 min | extended / advanced |
+## Repository layout
 
-## Data schema
+```text
+.
+├── README.md
+├── LICENSE
+├── testScript.m
+├── scripts/
+│   ├── Avoidance_data_analysis_01.m
+│   ├── Avoidance_data_analysis_02.m
+│   ├── Avoidance_data_analysis_03.m
+│   ├── Avoidance_data_analysis_04.m
+│   ├── Avoidance_data_analysis_05.m
+│   ├── Avoidance_data_analysis_06.m
+│   ├── Demo_Analysis.m
+│   ├── Dynamic_Calibration_Bdata_analysis.m
+│   ├── Dynamic_Calibration_Bdata_analysis2.m
+│   ├── Guidance_data_analysis_01.m
+│   ├── Guidance_data_analysis_02.m
+│   ├── Guidance_data_analysis_03.m
+│   ├── Magnet_Tracking_analysis.m
+│   ├── Safety_data_analysis_01.m
+│   ├── Safety_data_analysis_02.m
+│   ├── Safety_data_analysis_03.m
+│   ├── Safety_data_analysis_04.m
+│   └── StaticCalibrationPanel.m
+├── dependencies/
+│   ├── dabarplot.m
+│   ├── daboxplot.m
+│   ├── daviolinplot.m
+│   ├── Levenetest.m
+│   ├── SpectralArcLength.m
+│   ├── swtest.m
+│   └── plot2svg-master/
+└── data/
+    ├── session_01/
+    │   ├── avoidance_exp/
+    │   ├── demo_experiment/
+    │   ├── experiments_mod_1/
+    │   ├── experiments_mod_2/
+    │   └── safety_experiments/
+    ├── session_02/
+    ├── session_03/
+    │   └── DataStop/
+    │       ├── 08ms/
+    │       ├── 09ms/
+    │       └── 10ms/
+    ├── session_04/
+    │   ├── 1_0ms/
+    │   └── Reference/
+    ├── session_05/
+    └── session_06/
+```
 
-Three schema levels are present in the CSV files.
+## Data summary
 
-### 1. Base schema
+The repository currently references **122 Git LFS-tracked data files** for an approximate total payload of **7.62 GiB**. It should weight around **16 Gb**.
 
-Present in most files, with 28 columns:
+| Session | Main contents | Files | Approx. size* |
+|---|---|---:|---:|
+| `session_01` | Avoidance, demo, guidance, and safety CSV logs | 33 | 3.02 GiB |
+| `session_02` | Avoidance, calibration, and magnetic-tracking CSV logs | 15 | 3.54 GiB |
+| `session_03` | Stop-response CSV batches (`08ms`, `09ms`, `10ms`) | 56 | 0.78 GiB |
+| `session_04` | ROS bag files for stop/safety experiments | 13 | 0.19 GiB |
+| `session_05` | ROS bag + neural-network result file | 2 | 0.06 GiB |
+| `session_06` | ROS bag + derived tremor/statistics MAT files | 3 | 0.02 GiB |
 
-- `time`
-- `mag_pos_x`, `mag_pos_y`, `mag_pos_z`
-- `mag_orien_x`, `mag_orien_y`, `mag_orien_z`
-- `ee_x`, `ee_y`, `ee_z`
-- `v_ee_x`, `v_ee_y`, `v_ee_z`
-- `F_ee_x`, `F_ee_y`, `F_ee_z`
-- `s1_x`, `s1_y`, `s1_z`
-- `s2_x`, `s2_y`, `s2_z`
-- `s3_x`, `s3_y`, `s3_z`
-- `s4_x`, `s4_y`, `s4_z`
+\* Sizes are estimated from Git LFS metadata.
 
-### 2. Extended schema
+## Script overview
 
-Adds derived or auxiliary fields to the base schema:
+### Avoidance analysis
 
-- normalized sensor channels: `n_s1_*`, `n_s2_*`, `n_s3_*`, `n_s4_*`
-- timing / quality metrics: `ls_compute_time`, `r2`
+| Script | Purpose |
+|---|---|
+| `Avoidance_data_analysis_01.m` | Segment and visualize avoidance trajectories for selected conditions. |
+| `Avoidance_data_analysis_02.m` | Compare avoidance performance with compact summary plots. |
+| `Avoidance_data_analysis_03.m` | Run statistical analysis for radius-based avoidance experiments. |
+| `Avoidance_data_analysis_04.m` | Extend avoidance analysis with timing and velocity features. |
+| `Avoidance_data_analysis_05.m` | Study avoidance behavior versus obstacle distance/radius. |
+| `Avoidance_data_analysis_06.m` | Reconstruct and visualize a 2D velocity field from avoidance trials. |
 
-These files contain 42 columns in total.
+### Safety analysis
 
-### 3. Advanced schema
+| Script | Purpose |
+|---|---|
+| `Safety_data_analysis_01.m` | Segment and visualize safety experiment trajectories. |
+| `Safety_data_analysis_02.m` | Compare stop distance and stop time across conditions. |
+| `Safety_data_analysis_03.m` | Batch-process CSV stop experiments and summarize minimum-distance behavior. |
+| `Safety_data_analysis_04.m` | Analyze stop behavior directly from ROS bag recordings. |
 
-Present in selected files and extends the previous schema with a flattened 16-element matrix-style output:
+### Guidance and demo analysis
 
-- `O_T_EE_1` through `O_T_EE_16`
+| Script | Purpose |
+|---|---|
+| `Guidance_data_analysis_01.m` | Analyze guidance study results, including questionnaire and trajectory metrics. |
+| `Guidance_data_analysis_02.m` | Compare completion-time behavior between guidance modalities. |
+| `Guidance_data_analysis_03.m` | Extract tremor/vibration metrics from still segments in ROS bag data. |
+| `Demo_Analysis.m` | Inspect one demo recording and visualize end-effector motion and state evolution. |
 
-Some demo files also include:
+### Tracking, calibration, and learning
 
-- `state`
+| Script | Purpose |
+|---|---|
+| `Magnet_Tracking_analysis.m` | Aggregate 3D magnetic tracking performance and computation-time trends. |
+| `StaticCalibrationPanel.m` | Perform static magnetometer calibration and visualize ellipsoid correction. |
+| `Dynamic_Calibration_Bdata_analysis.m` | Compare dynamically calibrated and non-calibrated magnetic-field measurements. |
+| `Dynamic_Calibration_Bdata_analysis2.m` | Build an LSTM-based pipeline for magnetic-field estimation from robot-link motion. |
 
-These files contain 58 or 59 columns, depending on whether `state` is present.
+### Utility
 
-## File naming convention
+| Script | Purpose |
+|---|---|
+| `testScript.m` | Smoke-test the repository by running the scripts in test mode. |
 
-The filenames are descriptive and usually encode the experiment category, setup type, run number, and a timestamp suffix.
+### MATLAB
 
-Examples:
+The script headers indicate the project was tested on **MATLAB R2025b**. In practice, many scripts should also run on earlier releases, but scripts using modern name-value syntax are best suited to **R2021a or newer**.
 
-- `Avoidance_REAL1_exp_09_07_15_57_32.csv`
-- `SAFETY_VIRTUAL_3_exp_09_07_18_27_01.csv`
-- `data_em1_S01.csv`
-- `Demo_exp_02_18_20_10_41.csv`
+### Toolboxes Requirements
 
-In practical terms:
+Toolbox requirements vary by script. Across the repository, the following toolboxes are used:
+- Signal Processing Toolbox
+- Statistics and Machine Learning Toolbox
+- Curve Fitting Toolbox
+- ROS Toolbox
+- Sensor Fusion and Tracking Toolbox
+- Navigation Toolbox
+- System Identification Toolbox
+- Deep Learning Toolbox
 
-- `REAL` / `VIRTUAL` likely distinguish experiment modes or environments
-- `em1` / `em2` refer to modular experiment groups
-- `S01` to `S09` appear to identify subject IDs, sequence IDs, or run IDs
-- trailing numeric groups act as timestamp-like identifiers
+Not every script needs every toolbox. Check the header at the top of the specific script you want to run.
+
+### Included helper functions
+
+The `dependencies/` folder contains local plotting and statistics helpers used by the scripts, including:
+- `dabarplot`
+- `daboxplot`
+- `daviolinplot`
+- `swtest`
+- `Levenetest`
+- `SpectralArcLength`
+- `plot2svg`
 
 ## Quick start
 
-### Python example
-
-```python
-from pathlib import Path
-import pandas as pd
-
-file_path = Path("data/session_01/avoidance_exp/Avoidance_REAL1_exp_09_07_15_57_32.csv")
-df = pd.read_csv(file_path)
-
-# Create a relative time axis for analysis
-df["t"] = df["time"] - df["time"].iloc[0]
-
-# Example inspection
-print(df.head())
-print(df.columns.tolist())
-print(df[["t", "ee_x", "ee_y", "ee_z"]].describe())
-```
-
-### MATLAB example
+1. Fetch the repository with **Git LFS** so that the real data files are available.
+2. Open MATLAB in the **repository root**.
+3. Run the smoke test:
 
 ```matlab
-T = readtable('data/session_01/avoidance_exp/Avoidance_REAL1_exp_09_07_15_57_32.csv');
-T.t = T.time - T.time(1);
-
-head(T)
-summary(T(:, {'t','ee_x','ee_y','ee_z'}))
+testScript
 ```
 
-## Suggested analysis workflow
+4. Run a specific analysis script from the `scripts/` folder, for example:
 
-A typical workflow for working with this dataset is:
+```matlab
+run("scripts/Magnet_Tracking_analysis.m")
+run("scripts/Avoidance_data_analysis_01.m")
+```
 
-1. Select a session and experiment family.
-2. Load one or more CSV files.
-3. Convert `time` to a relative timeline.
-4. Inspect the channels relevant to your study, such as end-effector motion, force, or sensor trajectories.
-5. Compare runs across `REAL` and `VIRTUAL` conditions or across experimental modules.
-6. Export cleaned subsets or derived features for downstream modeling or statistical analysis.
+Make sure to be in the script folder path when running the scripts individually.
+Most scripts expose user-editable configuration variables near the top of the file, such as selected trial index, file name, condition, or visualization options.
 
-## Notes and caveats
+## Notes on usage
 
-- Several files start with an initial zero-valued segment before dynamic measurements appear. This is likely a warm-up, synchronization, or idle phase and may need trimming during preprocessing.
-- Column availability is not fully uniform across all files. Always inspect the header before batch processing.
-- The semantic meaning of advanced fields such as `O_T_EE_*`, `state`, and `ls_compute_time` should be verified against the original acquisition or analysis pipeline.
-- Filename capitalization is not completely uniform across all runs, so case-sensitive workflows should be written carefully.
+- Several scripts assume the repository structure is preserved exactly as provided.
+- Some analyses rely on **interactive selections** (`ginput`) or manual point picking.
+- `Dynamic_Calibration_Bdata_analysis2.m` can be computationally expensive when training is enabled.
+- Some scripts work on CSV telemetry, while others require ROS bag files and precomputed `.mat` outputs.
+- File and folder naming is part of the workflow, so renaming data assets may break hard-coded references.
 
-## Recommended next additions
+## Reproducibility notes
 
-To make the repository easier to reuse and reproduce, the following additions would strengthen it significantly:
-
-- analysis scripts or notebooks
-- a data dictionary for each column
-- experiment protocol notes
-- subject/run metadata
-- a license file
-- citation information for publications using this dataset
+- The repository is organized primarily by **session**, not by publication figure.
+- Data-processing choices such as trimming, smoothing, segment selection, and condition selection are implemented inside the scripts.
+- The script headers provide a useful starting point for understanding each file's goal, dependencies, and expected outputs.
 
 ## License
 
-MIT License
+This project is released under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 ## Citation
 
-F. Masiero et al., "Human-Aware Motion Framework Exploiting Magnetic Sensing in Collaborative Robotics".
+If this repository contributes to your work, please cite the associated publication:
+
+> F. Masiero et al., *Human-Aware Motion Framework Exploiting Magnetic Sensing in Collaborative Robotics*.
