@@ -333,7 +333,7 @@ if (TRAIN_NN)
 
 else
 
-    load("data\session_05\NNResults01.mat")
+    load("NNResults01.mat")
 
     net_data1 = nn_models.net_data1;
     net_data2 = nn_models.net_data2;
