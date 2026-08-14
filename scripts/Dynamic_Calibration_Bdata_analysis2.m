@@ -14,6 +14,7 @@ try
         disp("TEST MODE ON "+scriptName)
         addpath("data/session_05")
         bag = rosbagreader("2026-03-24-13-57-45.bag");
+        addpath("dependencies")
     end
 catch exception
     clc
@@ -26,9 +27,9 @@ catch exception
     addpath("data/session_05")
     bag = rosbagreader("2026-03-24-13-57-45.bag");
     cd(currentPath)
+    addpath("../dependencies")
 end
 
-addpath("dependencies")
 TRAIN_NN = false;
 
 % bag.AvailableTopics

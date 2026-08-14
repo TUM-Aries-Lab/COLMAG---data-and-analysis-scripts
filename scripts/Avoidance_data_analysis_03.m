@@ -18,6 +18,16 @@
 % right, respectively.
 % Also, choose plotType = "2D" or "3D" to have 2d or 3d plots,
 % respectively.
+%
+% Trial counts: the trajectory plots (2D/3D overlays above) render all
+% automatically segmented trials per condition (nTrials-1 each for
+% REAL1/REAL_2/REAL_3, summing to 45 total, matching the nominal ~15
+% trials per marker position collected in Materials and Methods). The
+% quantitative minimum-avoidance-distance comparison (minDistArray, below)
+% instead uses a reduced, explicitly documented subset of 14 matched
+% trials per condition (see comments above minDistArray) to exclude
+% trials affected by a documented equipment interruption during data
+% collection.
 
 warning off
 try
@@ -25,6 +35,7 @@ try
         disp("TEST MODE ON "+scriptName)
         addpath(genpath("data/session_01"))
         addpath(genpath("data/session_02"))
+        addpath(genpath("dependencies"))
     end 
 catch exception
     clc
@@ -37,9 +48,8 @@ catch exception
     addpath(genpath("data/session_01"))
     addpath(genpath("data/session_02"))
     cd(currentPath)
+    addpath(genpath("../dependencies"))
 end
-
-addpath(genpath("dependencies"))
 
 %% General Settings of Variables
 
@@ -328,12 +338,29 @@ end
 
 %%
 
-minDistArray = [minDistances(1).values([1:7 15:21])
-                minDistances(2).values([1:3 24:34]) 
-                minDistances(3).values([4:10 16:18 26:28 30])
-                minDistances(4).values(1:14)
-                minDistances(5).values(1:14)
-                minDistances(6).values(15:end)]';
+% Trial selection for the quantitative minimum-avoidance-distance comparison.
+% For the three magnetic-tracking conditions (REAL1/2/3), a subset of the
+% automatically segmented trials is excluded because of a documented
+% equipment interruption affecting a contiguous block of trials within
+% each session (per corresponding-author records); all conditions are
+% truncated to 14 matched trials for a balanced comparison. The two
+% known-position reference conditions (VIRTUAL1/2) were unaffected and use
+% their first 14 segmented trials; VIRTUAL_3's first-direction trials were
+% affected by the same session interruption, so its second-direction
+% trials are used instead.
+realPos1_validTrials     = [1:7 15:21];              % REAL1   (left):   trials 8-14 excluded
+realPos2_validTrials     = [1:3 24:34];              % REAL_2  (center): trials 4-23 excluded
+realPos3_validTrials     = [4:10 16:18 26:28 30];    % REAL_3  (right):  trials 1-3, 11-15, 19-25, 29 excluded
+virtualPos1_validTrials  = 1:14;                     % VIRTUAL1 (left):   all retained
+virtualPos2_validTrials  = 1:14;                     % VIRTUAL2 (center): all retained
+virtualPos3_validTrials  = 15:(14+14);                % VIRTUAL_3 (right): second-direction trials retained
+
+minDistArray = [minDistances(1).values(realPos1_validTrials)
+                minDistances(2).values(realPos2_validTrials)
+                minDistances(3).values(realPos3_validTrials)
+                minDistances(4).values(virtualPos1_validTrials)
+                minDistances(5).values(virtualPos2_validTrials)
+                minDistances(6).values(virtualPos3_validTrials)]';
 
 figure("Units","normalized","Position",[0.3 0.3 0.15 0.3])
 h = dabarplot(minDistArray,'errorbars','SD',...

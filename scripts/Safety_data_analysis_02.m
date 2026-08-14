@@ -25,13 +25,12 @@
 % not active and the robot was controlled knowing the exact magnet
 % location.
 
-
-
 warning off
 try
     if(test)
         disp("TEST MODE ON "+scriptName)
         addpath(genpath("data/session_01"))
+        addpath("dependencies")
     end
 catch exception
     clc
@@ -43,9 +42,8 @@ catch exception
     cd ..
     addpath(genpath("data/session_01"))
     cd(currentPath)
+    addpath("../dependencies")
 end
-
-addpath("dependencies")
 
 %% Data Loading
 
@@ -268,10 +266,18 @@ try
 catch exception
     disp("STOP DISTANCES")
 
-    [p,tbl,stats] = friedman(StopDistArray)
+    disp("--- OMNIBUS Friedman test across the 3 workspace locations ---")
+    [pOmni,tbl,statsOmni] = friedman(StopDistArray);
+    disp("Omnibus chi2 = " + num2str(tbl{2,5}) + ", omnibus p = " + num2str(pOmni))
 
-    [results,means,~,gnames] = multcompare(stats,"CriticalValueType","bonferroni")
+    disp("--- POST-HOC pairwise comparisons (Bonferroni-corrected) ---")
+    [results,means,~,gnames] = multcompare(statsOmni,"CriticalValueType","bonferroni");
+    for r = 1:size(results,1)
+        disp(gnames(results(r,1)) + " vs " + gnames(results(r,2)) + ...
+            ": p_bonferroni = " + num2str(results(r,6)))
+    end
 
+    disp("--- Wilcoxon signed-rank vs. pre-programmed (known-position) reference ---")
     [p,h,stats] = signrank(StopDistArray(:),mean(groundTruthStop))
 end
 
@@ -311,22 +317,40 @@ catch exception
     h = dabarplot(TimesArray,'errorbars','SD',...
         'barspacing',0.8);
 
-    disp("SLOW DOWN TIMES")
-    [p,tbl,stats] = friedman(TimesArray(:,[1:2:end]))
+    disp("SLOW DOWN TIMES (t_Slow)")
+    disp("--- OMNIBUS Friedman test across the 3 workspace locations ---")
+    [pOmniSD,tblSD,statsSD] = friedman(TimesArray(:,[1:2:end]));
+    disp("Omnibus chi2 = " + num2str(tblSD{2,5}) + ", omnibus p = " + num2str(pOmniSD))
 
-    [results,means,~,gnames] = multcompare(stats,"CriticalValueType","bonferroni")
+    disp("--- POST-HOC pairwise comparisons (Bonferroni-corrected) ---")
+    [resultsSD,meansSD,~,gnamesSD] = multcompare(statsSD,"CriticalValueType","bonferroni");
+    for r = 1:size(resultsSD,1)
+        disp(gnamesSD(resultsSD(r,1)) + " vs " + gnamesSD(resultsSD(r,2)) + ...
+            ": p_bonferroni = " + num2str(resultsSD(r,6)))
+    end
 
+    disp("--- Wilcoxon signed-rank vs. pre-programmed (known-position) reference ---")
     [p,h,stats] = signrank(reshape(TimesArray(:,1:2:end),[],1),0.522)
 
     %% STOP TIME ANALYSIS
 
-    disp("STOP TIMES")
-    [p,tbl,stats] = friedman(TimesArray(:,[2:2:end]))
+    disp("STOP TIMES (t_Stop)")
+    disp("--- OMNIBUS Friedman test across the 3 workspace locations ---")
+    [pOmniST,tblST,statsST] = friedman(TimesArray(:,[2:2:end]));
+    disp("Omnibus chi2 = " + num2str(tblST{2,5}) + ", omnibus p = " + num2str(pOmniST))
+
+    disp("--- POST-HOC pairwise comparisons (Bonferroni-corrected) ---")
+    [resultsST,meansST,~,gnamesST] = multcompare(statsST,"CriticalValueType","bonferroni");
+    for r = 1:size(resultsST,1)
+        disp(gnamesST(resultsST(r,1)) + " vs " + gnamesST(resultsST(r,2)) + ...
+            ": p_bonferroni = " + num2str(resultsST(r,6)))
+    end
 
     subplot(212)
     h = dabarplot([reshape(TimesArray(:,1:2:end),[],1) reshape(TimesArray(:,2:2:end),[],1)],'errorbars','SD',...
         'barspacing',0.8);
 
+    disp("--- Wilcoxon signed-rank vs. pre-programmed (known-position) reference ---")
     [p,h,stats] = signrank(reshape(TimesArray(:,2:2:end),[],1),0.502)
 end
 

@@ -13,6 +13,7 @@ try
         disp("TEST MODE ON "+scriptName)
         addpath(genpath("data/session_01"))
         addpath(genpath("data/session_02"))
+        addpath(genpath("dependencies"))
     end
 catch exception
     clc
@@ -25,9 +26,8 @@ catch exception
     addpath(genpath("data/session_01"))
     addpath(genpath("data/session_02"))
     cd(currentPath)
+    addpath(genpath("../dependencies"))
 end
-
-addpath(genpath("dependencies"))
 
 %% Data Loading
 

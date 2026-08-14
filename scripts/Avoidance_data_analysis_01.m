@@ -43,7 +43,7 @@ catch exception
     cd(currentPath)
 end
 
-addpath("dependencies")
+%addpath("dependencies")
 
 %% Data Loading
 

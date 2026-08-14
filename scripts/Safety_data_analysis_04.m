@@ -14,6 +14,7 @@ try
         folderPath = "data/session_04";
         addpath(genpath(folderPath))
         bag_files = dir("data/session_04/**/*.bag");
+        addpath("dependencies")
     end
 catch exception
     clc
@@ -27,9 +28,8 @@ catch exception
     bag_files = dir("data/session_04/**/*.bag");
     addpath(genpath(folderPath))
     cd(currentPath)
+    addpath("../dependencies")
 end
-
-addpath("dependencies")
 
 %%
 

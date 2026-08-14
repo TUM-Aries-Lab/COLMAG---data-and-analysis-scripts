@@ -12,6 +12,7 @@ try
     if(test)
         disp("TEST MODE ON "+scriptName)
         addpath(genpath("data/session_01"))
+        addpath("dependencies")
     end 
 catch exception
     clc
@@ -23,14 +24,16 @@ catch exception
     cd ..
     addpath(genpath("data/session_01"))
     cd(currentPath)
+    addpath("../dependencies")
 end
 
-addpath("dependencies")
-
 %%
+% Participant S02 is excluded from files/files2: data_em1_S02.csv and
+% data_em2_S02.csv are byte-identical duplicates of a single recording
+% (confirmed via checksum), so no independent Mode-2 measurement exists
+% for S02, and no backup of the original recording is available.
 
 files = ["data_em1_S01.csv"
-         "data_em1_S02.csv"
          "data_em1_S03.csv"
          "data_em1_S04.csv"
          "data_em1_S05.csv"
@@ -39,7 +42,6 @@ files = ["data_em1_S01.csv"
          "data_em1_S08.csv"
          "data_em1_S09.csv"];
 files2 = ["data_em2_S01.csv"
-          "data_em2_S02.csv"
           "data_em2_S03.csv"
           "data_em2_S04.csv"
           "data_em2_S05.csv"
@@ -79,16 +81,85 @@ plot(struct.time2,"x")
 
 figure
 h = dabarplot([struct.time;struct.time2]');
+overlaySubjectScatter([struct.time;struct.time2]', ones(8,1), h.gpos);
 
+% Completion times are within-participant (same 8 participants in both
+% modes), so the paired Wilcoxon signed-rank test (signrank) is used
+% instead of the unpaired ranksum/Mann-Whitney test.
 try
     if(test)
-        [p,h,stats] = ranksum(struct.time',struct.time2');
-    end 
+        [p,h,stats] = signrank(struct.time',struct.time2');
+    end
 catch exception
-    [p,h,stats] = ranksum(struct.time',struct.time2')
+    disp("****** WILCOXON SIGNED-RANK (paired) on task completion time for MOD1 vs MOD2 ******")
+    [p,h,stats] = signrank(struct.time',struct.time2')
+    disp("****** ------------------------------ ******")
 end
 
 %%
+
+function overlaySubjectScatter(data, group_inx, gpos)
+% Per-subject colored scatter points with connecting lines overlaid on dabarplot.
+% Within each group, same-subject markers across conditions are connected.
+% For single-condition data, same-subject markers are connected between groups.
+% n_subjects = 8: participant S02 is excluded throughout this script
+% (duplicate Mode-1/Mode-2 recording, see note at top of file).
+n_subjects = 8;
+subj_colors = lines(n_subjects);
+markers     = {'o','s','d','^','v','>','<','p'};
+
+data   = double(data);
+if isvector(data), data = data(:); end
+groups     = unique(group_inx(:));
+num_groups = numel(groups);
+num_conds  = size(data, 2);
+gpos       = reshape(gpos, num_groups, num_conds);
+
+% Jitter scale: 20% of the minimum inter-bar gap, clamped to [0.02, 0.06]
+all_x = sort(gpos(:));
+if numel(all_x) > 1
+    jitter_scale = min(diff(all_x)) * 0.20;
+    jitter_scale = min(max(jitter_scale, 0.02), 0.06);
+else
+    jitter_scale = 0.04;
+end
+
+% Pre-generate per-subject offsets for each group (same offset across all
+% conditions so within-group connecting lines stay parallel and don't cross)
+x_offs = (rand(n_subjects, num_groups) - 0.5) * 2 * jitter_scale;
+
+for g = 1:num_groups
+    mask = group_inx == groups(g);
+    grp  = data(mask, :);
+    for i = 1:n_subjects
+        col = subj_colors(i,:);
+        xp  = gpos(g,:) + x_offs(i,g);
+        yp  = grp(i,:);
+        if num_conds > 1
+            lh = plot(xp, yp, '-', 'Color', col, 'LineWidth', 0.8, 'HandleVisibility', 'off');
+            lh.Color(4) = 0.35;
+            hold on;
+        end
+        scatter(xp, yp, 30, col, markers{i}, 'filled', ...
+            'MarkerFaceAlpha', 0.7, 'MarkerEdgeColor', 'k', 'LineWidth', 0.5, ...
+            'HandleVisibility', 'off');
+        hold on;
+    end
+end
+
+% For single-condition plots connect the same subject between the two groups
+if num_conds == 1 && num_groups == 2
+    d1 = data(group_inx == groups(1), :);
+    d2 = data(group_inx == groups(2), :);
+    for i = 1:n_subjects
+        col = subj_colors(i,:);
+        lh  = plot([gpos(1)+x_offs(i,1)  gpos(2)+x_offs(i,2)], [d1(i) d2(i)], '-', ...
+            'Color', col, 'LineWidth', 0.8, 'HandleVisibility', 'off');
+        lh.Color(4) = 0.35;
+        hold on;
+    end
+end
+end
 
 function data = importGuidanceFile(filename, dataLines)
 %IMPORTFILE Import data from a text file

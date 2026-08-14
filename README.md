@@ -53,13 +53,15 @@ Tracked extensions in this repository:
 │   ├── Magnet_Tracking_analysis.m
 │   ├── Safety_data_analysis_01.m
 │   ├── Safety_data_analysis_02.m
-│   ├── Safety_data_analysis_03.m
+│   ├── Safety_data_analysis_03_detect.m
+│   ├── Safety_data_analysis_03_plot.m
 │   ├── Safety_data_analysis_04.m
 │   └── StaticCalibrationPanel.m
 ├── dependencies/
 │   ├── dabarplot.m
 │   ├── daboxplot.m
 │   ├── daviolinplot.m
+│   ├── gkdeb.m
 │   ├── Levenetest.m
 │   ├── SpectralArcLength.m
 │   ├── swtest.m
@@ -96,6 +98,7 @@ The repository currently references **122 Git LFS-tracked data files** for an ap
 | `session_04` | ROS bag files for stop/safety experiments | 13 | 0.19 GiB |
 | `session_05` | ROS bag + neural-network result file | 2 | 0.06 GiB |
 | `session_06` | ROS bag + derived tremor/statistics MAT files | 3 | 0.02 GiB |
+| `disturbances` | CSV logs of common metallic/electromagnetic objects (driller, crimper, hammer, caliper, wrenches, phone) approached near the detector for disturbance-rejection characterization (Table S2) | 6 | 0.28 GiB |
 
 \* Sizes are estimated from Git LFS metadata.
 
@@ -118,7 +121,8 @@ The repository currently references **122 Git LFS-tracked data files** for an ap
 |---|---|
 | `Safety_data_analysis_01.m` | Segment and visualize safety experiment trajectories. |
 | `Safety_data_analysis_02.m` | Compare stop distance and stop time across conditions. |
-| `Safety_data_analysis_03.m` | Batch-process CSV stop experiments and summarize minimum-distance behavior. |
+| `Safety_data_analysis_03_detect.m` | Load the 1 m/s stop-distance trials, automatically detect and flag defective/outlier trials (documented speed and duration criteria), and save the cleaned trial data. Run this first. |
+| `Safety_data_analysis_03_plot.m` | Load the cleaned trial data saved by `Safety_data_analysis_03_detect.m` and produce the representative profile plots and the stop-distance-vs-speed statistical comparison. Performs no trial selection of its own. |
 | `Safety_data_analysis_04.m` | Analyze stop behavior directly from ROS bag recordings. |
 
 ### Guidance and demo analysis
@@ -138,6 +142,7 @@ The repository currently references **122 Git LFS-tracked data files** for an ap
 | `StaticCalibrationPanel.m` | Perform static magnetometer calibration and visualize ellipsoid correction. |
 | `Dynamic_Calibration_Bdata_analysis.m` | Compare dynamically calibrated and non-calibrated magnetic-field measurements. |
 | `Dynamic_Calibration_Bdata_analysis2.m` | Build an LSTM-based pipeline for magnetic-field estimation from robot-link motion. |
+| `DataViewer_disturancesquantitative.m` | Quantify disturbance rejection against common metallic/electromagnetic objects and reproduce the peak field / peak R2 / average R2 / misclassification summary in Table S2. |
 
 ### Utility
 
@@ -169,6 +174,7 @@ The `dependencies/` folder contains local plotting and statistics helpers used b
 - `dabarplot`
 - `daboxplot`
 - `daviolinplot`
+- `gkdeb` (Gaussian kernel density estimation with bounded support)
 - `swtest`
 - `Levenetest`
 - `SpectralArcLength`
@@ -191,7 +197,7 @@ run("scripts/Magnet_Tracking_analysis.m")
 run("scripts/Avoidance_data_analysis_01.m")
 ```
 
-Make sure to be in the script folder path when running the scripts individually.
+Make sure to be in the script folder path when running the scripts individually. Make sure also that the workspace is clear from the test flag variable (if not sure, run clear before running the script).
 Most scripts expose user-editable configuration variables near the top of the file, such as selected trial index, file name, condition, or visualization options.
 
 ## Notes on usage
